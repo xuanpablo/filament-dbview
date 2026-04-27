@@ -26,7 +26,7 @@ composer require xuanpablo/filament-dbview
 
 ```bash
 # Publish provider groups (config, views, migrations)
-php artisan vendor:publish --provider="Xuanpablo\\Dbview\\Providers\\DatabaseViewerServiceProvider"
+php artisan vendor:publish --provider="Xuanpablo\\Dbview\\Providers\\DbviewServiceProvider"
 
 # Run migrations
 php artisan migrate

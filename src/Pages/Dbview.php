@@ -10,6 +10,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -29,13 +30,13 @@ class Dbview extends Page implements HasForms, HasTable
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-circle-stack';
 
-    protected static ?string $navigationLabel = 'Database Viewer';
+    protected static ?string $navigationLabel = 'DB';
 
-    protected static ?string $title = 'Database Viewer';
+    protected static ?string $title = 'DB';
 
     protected static string|\UnitEnum|null $navigationGroup = 'System';
 
-    protected string $view = 'database-viewer::pages.database-viewer';
+    protected string $view = 'dbview::pages.dbview';
 
     public array $data = [];
 
@@ -69,9 +70,16 @@ class Dbview extends Page implements HasForms, HasTable
 
     public $tableRecords = [];
 
+    public string $tableFilter = '';
+
     public function getHeading(): Htmlable|string
     {
-        return 'Database Viewer';
+        return 'Dbview';
+    }
+
+    public function getMaxContentWidth(): Width
+    {
+        return Width::Full;
     }
 
     public function mount(): void
@@ -102,51 +110,6 @@ class Dbview extends Page implements HasForms, HasTable
                     }),
             ])
             ->defaultSort($this->getDefaultSortColumn())
-            // Move controls into the header toolbar alongside search
-            ->headerActions([
-                Action::make('selectTable')
-                    ->label($this->activeTable ? 'Table: '.$this->activeTable : 'Select Table')
-                    ->icon('heroicon-m-table-cells')
-                    ->color('gray')
-                    ->outlined()
-                    ->size('sm')
-                    ->schema([
-                        Select::make('table')
-                            ->label('Select Table')
-                            ->options(fn () => $this->getAllTables())
-                            ->required()
-                            ->default($this->activeTable)
-                            ->searchable(),
-                    ])
-                    ->action(function (array $data) {
-                        if (! empty($data['table'])) {
-                            $this->switchTable($data['table']);
-                            if (method_exists($this, 'resetTable')) {
-                                $this->resetTable();
-                            }
-                            $this->dispatch('$refresh');
-                        }
-                    }),
-
-                Action::make('toggleStructure')
-                    ->label($this->currentView === 'structure' ? 'View Data' : 'View Structure')
-                    ->icon($this->currentView === 'structure' ? 'heroicon-m-table-cells' : 'heroicon-m-cog-6-tooth')
-                    ->color('gray')
-                    ->outlined()
-                    ->size('sm')
-                    ->action(fn () => $this->toggleStructureView())
-                    ->visible(fn () => ! empty($this->activeTable)),
-
-                Action::make('refresh')
-                    ->label('Refresh')
-                    ->icon('heroicon-m-arrow-path')
-                    ->color('gray')
-                    ->outlined()
-                    ->size('sm')
-                    ->action(fn () => $this->refreshTable())
-                    ->visible(fn () => ! empty($this->activeTable)),
-            ])
-            // Position API not available; keep actions inline and align via CSS in blade
             ->searchable()
             ->emptyStateIcon('heroicon-o-table-cells')
             ->emptyStateHeading('No Table Selected')
@@ -737,6 +700,47 @@ class Dbview extends Page implements HasForms, HasTable
         } elseif ($view === 'content' && $this->selectedTable && empty($this->tableData)) {
             $this->loadTableData();
         }
+    }
+
+    public function getTablesTree(): array
+    {
+        $tables = array_keys($this->getAllTables());
+        sort($tables);
+
+        $needle = strtolower(trim($this->tableFilter));
+        if ($needle !== '') {
+            $tables = array_values(array_filter(
+                $tables,
+                fn (string $t) => str_contains(strtolower($t), $needle),
+            ));
+        }
+
+        $tree = ['_root' => []];
+        foreach ($tables as $name) {
+            $pos = strpos($name, '_');
+            if ($pos === false || $pos === 0) {
+                $tree['_root'][] = ['name' => $name, 'leaf' => $name];
+
+                continue;
+            }
+            $folder = substr($name, 0, $pos);
+            $leaf = substr($name, $pos + 1);
+            $tree[$folder] ??= [];
+            $tree[$folder][] = ['name' => $name, 'leaf' => $leaf];
+        }
+
+        // Demote folders with a single child back to the root for less visual noise.
+        foreach ($tree as $folder => $children) {
+            if ($folder !== '_root' && count($children) === 1) {
+                $tree['_root'][] = $children[0];
+                unset($tree[$folder]);
+            }
+        }
+
+        sort($tree['_root']);
+        ksort($tree);
+
+        return $tree;
     }
 
     private function getAllTables(): array

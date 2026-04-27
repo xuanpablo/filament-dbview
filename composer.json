@@ -27,7 +27,7 @@
   "extra": {
     "laravel": {
       "providers": [
-        "Xuanpablo\\Dbview\\Providers\\DatabaseViewerServiceProvider"
+        "Xuanpablo\\Dbview\\Providers\\DbviewServiceProvider"
       ]
     }
   },

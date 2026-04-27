@@ -4,8 +4,9 @@ namespace Xuanpablo\Dbview;
 
 use Filament\Contracts\Plugin as PluginContract;
 use Filament\Panel;
+use Xuanpablo\Dbview\Pages\Dbview;
 
-class DatabaseViewerPlugin implements PluginContract
+class DbviewPlugin implements PluginContract
 {
     public static function make(): static
     {
@@ -20,7 +21,7 @@ class DatabaseViewerPlugin implements PluginContract
     public function register(Panel $panel): void
     {
         $panel->pages([
-            \Xuanpablo\Dbview\Pages\DatabaseViewer::class,
+            Dbview::class,
         ]);
     }
 

@@ -7,7 +7,7 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class DbviewServiceProvider extends PackageServiceProvider
 {
-    public static string $name = 'database-viewer';
+    public static string $name = 'dbview';
 
     public function configurePackage(Package $package): void
     {
