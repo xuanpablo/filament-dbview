@@ -188,37 +188,6 @@ tail -f storage/logs/laravel.log
 - Monitor and log all database access
 - Implement query timeouts to prevent long-running queries
 
-## Uninstall
-
-### 1. Remove Plugin Registration
-
-Remove the plugin from your panel provider:
-
-```php
-// remove ->plugin(\Xuanpablo\Dbview\DatabaseViewerPlugin::make())
-```
-
-### 2. Roll Back Migrations (Optional)
-
-```bash
-php artisan migrate:rollback
-# or roll back specific published files if needed
-```
-
-### 3. Remove Published Assets (Optional)
-
-```bash
-rm -f config/database-viewer.php
-rm -rf resources/views/vendor/database-viewer
-```
-
-### 4. Remove Package and Clear Caches
-
-```bash
-composer remove xuanpablo/filament-dbview
-php artisan optimize:clear
-```
-
 ## Support
 
 - **Documentation**: [GitHub Repository](https://github.com/xuanpablo/filament-dbview)

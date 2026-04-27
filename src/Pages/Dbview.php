@@ -23,7 +23,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema as DBSchema;
 
-class DatabaseViewer extends Page implements HasForms, HasTable
+class Dbview extends Page implements HasForms, HasTable
 {
     use InteractsWithForms, InteractsWithTable;
 
