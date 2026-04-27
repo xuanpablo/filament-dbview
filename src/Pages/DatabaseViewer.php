@@ -1,10 +1,10 @@
 <?php
 
-namespace Filaforge\DatabaseViewer\Pages;
+namespace Xuanpablo\Dbview\Pages;
 
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -13,31 +13,27 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Table;
-use Filament\Actions\Action;
-// Position class may not exist in this Filament version; fallback to CSS alignment
-// use Filament\Actions\SelectAction; // reverting to modal-based selection
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema as DBSchema;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Contracts\View\View;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Model;
 
 class DatabaseViewer extends Page implements HasForms, HasTable
 {
     use InteractsWithForms, InteractsWithTable;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-circle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-circle-stack';
 
     protected static ?string $navigationLabel = 'Database Viewer';
 
     protected static ?string $title = 'Database Viewer';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'System';
+    protected static string|\UnitEnum|null $navigationGroup = 'System';
 
     protected string $view = 'database-viewer::pages.database-viewer';
 
@@ -67,13 +63,13 @@ class DatabaseViewer extends Page implements HasForms, HasTable
 
     public ?string $activeTable = null;
 
-        public array $dynamicColumns = [];
+    public array $dynamicColumns = [];
 
     public array $visibleColumns = [];
 
     public $tableRecords = [];
 
-    public function getHeading(): \Illuminate\Contracts\Support\Htmlable|string
+    public function getHeading(): Htmlable|string
     {
         return 'Database Viewer';
     }
@@ -89,18 +85,19 @@ class DatabaseViewer extends Page implements HasForms, HasTable
         return $table
             ->query($this->getTableQuery())
             ->columns($this->getTableColumns())
-                        ->filters([
+            ->filters([
                 SelectFilter::make('columns')
                     ->label('Show Columns')
                     ->multiple()
                     ->options($this->getColumnOptions())
                     ->default($this->dynamicColumns)
                     ->query(function (Builder $query, array $data) {
-                        if (!empty($data['values'])) {
+                        if (! empty($data['values'])) {
                             $this->visibleColumns = $data['values'];
                         } else {
                             $this->visibleColumns = $this->dynamicColumns;
                         }
+
                         return $query;
                     }),
             ])
@@ -108,13 +105,13 @@ class DatabaseViewer extends Page implements HasForms, HasTable
             // Move controls into the header toolbar alongside search
             ->headerActions([
                 Action::make('selectTable')
-                    ->label($this->activeTable ? 'Table: ' . $this->activeTable : 'Select Table')
+                    ->label($this->activeTable ? 'Table: '.$this->activeTable : 'Select Table')
                     ->icon('heroicon-m-table-cells')
                     ->color('gray')
                     ->outlined()
                     ->size('sm')
-                    ->form([
-                        \Filament\Forms\Components\Select::make('table')
+                    ->schema([
+                        Select::make('table')
                             ->label('Select Table')
                             ->options(fn () => $this->getAllTables())
                             ->required()
@@ -122,7 +119,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
                             ->searchable(),
                     ])
                     ->action(function (array $data) {
-                        if (!empty($data['table'])) {
+                        if (! empty($data['table'])) {
                             $this->switchTable($data['table']);
                             if (method_exists($this, 'resetTable')) {
                                 $this->resetTable();
@@ -138,16 +135,16 @@ class DatabaseViewer extends Page implements HasForms, HasTable
                     ->outlined()
                     ->size('sm')
                     ->action(fn () => $this->toggleStructureView())
-                    ->visible(fn () => !empty($this->activeTable)),
+                    ->visible(fn () => ! empty($this->activeTable)),
 
-                                Action::make('refresh')
+                Action::make('refresh')
                     ->label('Refresh')
                     ->icon('heroicon-m-arrow-path')
                     ->color('gray')
                     ->outlined()
                     ->size('sm')
                     ->action(fn () => $this->refreshTable())
-                    ->visible(fn () => !empty($this->activeTable)),
+                    ->visible(fn () => ! empty($this->activeTable)),
             ])
             // Position API not available; keep actions inline and align via CSS in blade
             ->searchable()
@@ -157,26 +154,32 @@ class DatabaseViewer extends Page implements HasForms, HasTable
             ->paginated([10, 25, 50, 100]);
     }
 
-        protected function getTableQuery()
+    protected function getTableQuery()
     {
-        if (!$this->activeTable) {
+        if (! $this->activeTable) {
             // Return empty eloquent query
             $model = $this->createDynamicModel('empty_table');
+
             return $model->newQuery()->whereRaw('1 = 0');
         }
 
         $model = $this->createDynamicModel($this->activeTable);
+
         return $model->newQuery();
     }
 
-            protected function createDynamicModel(string $tableName): Model
+    protected function createDynamicModel(string $tableName): Model
     {
         $connection = $this->getConnectionName();
 
-        $model = new class extends Model {
+        $model = new class extends Model
+        {
             protected $guarded = [];
+
             public $timestamps = false;
+
             public $incrementing = false;
+
             protected $keyType = 'string';
         };
 
@@ -185,7 +188,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
 
         // Set primary key to first column if no id column exists
         $columns = DBSchema::connection($connection)->getColumnListing($tableName);
-        if (!empty($columns) && !in_array('id', $columns)) {
+        if (! empty($columns) && ! in_array('id', $columns)) {
             $model->setKeyName($columns[0]);
         }
 
@@ -218,18 +221,18 @@ class DatabaseViewer extends Page implements HasForms, HasTable
         return $this->dynamicColumns[0] ?? null;
     }
 
-        protected function getTableColumns(): array
+    protected function getTableColumns(): array
     {
         if (empty($this->dynamicColumns)) {
             return [
                 TextColumn::make('placeholder')
                     ->label('No columns available')
-                    ->state('Select a table to view data')
+                    ->state('Select a table to view data'),
             ];
         }
 
         // Use visible columns if set, otherwise use all columns
-        $columnsToShow = !empty($this->visibleColumns) ? $this->visibleColumns : $this->dynamicColumns;
+        $columnsToShow = ! empty($this->visibleColumns) ? $this->visibleColumns : $this->dynamicColumns;
 
         $columns = [];
         foreach ($columnsToShow as $column) {
@@ -247,14 +250,16 @@ class DatabaseViewer extends Page implements HasForms, HasTable
                             return $state ? 'true' : 'false';
                         }
                         if (is_string($state) && strlen($state) > 50) {
-                            return substr($state, 0, 50) . '...';
+                            return substr($state, 0, 50).'...';
                         }
+
                         return $state;
                     })
                     ->tooltip(function ($state) {
                         if (is_string($state) && strlen($state) > 50) {
                             return $state;
                         }
+
                         return null;
                     });
             }
@@ -263,7 +268,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
         return $columns;
     }
 
-            public function loadDefaultTable(): void
+    public function loadDefaultTable(): void
     {
         try {
             // Set default connection if not set
@@ -272,7 +277,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
             }
 
             $tables = $this->getAllTables();
-            if (!empty($tables)) {
+            if (! empty($tables)) {
                 // Try to use 'users' table as default, otherwise use first available
                 $defaultTable = array_key_exists('users', $tables) ? 'users' : array_key_first($tables);
                 $this->switchTable($defaultTable);
@@ -287,7 +292,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
         }
     }
 
-        public function switchTable(string $tableName): void
+    public function switchTable(string $tableName): void
     {
         try {
             $connection = $this->getConnectionName();
@@ -337,7 +342,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
             }
 
             // Fallback to first available column value
-            if (!empty($this->dynamicColumns)) {
+            if (! empty($this->dynamicColumns)) {
                 $firstColumn = $this->dynamicColumns[0];
                 if (isset($record->{$firstColumn})) {
                     return (string) $record->{$firstColumn};
@@ -353,9 +358,9 @@ class DatabaseViewer extends Page implements HasForms, HasTable
         return (string) spl_object_hash($record);
     }
 
-        protected function getModelKeyName(): ?string
+    protected function getModelKeyName(): ?string
     {
-        if (!$this->activeTable || empty($this->dynamicColumns)) {
+        if (! $this->activeTable || empty($this->dynamicColumns)) {
             return null;
         }
 
@@ -385,7 +390,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
         return $options;
     }
 
-        public function form(Schema $schema): Schema
+    public function form(Schema $schema): Schema
     {
         $connections = $this->getAvailableConnections();
 
@@ -396,7 +401,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
                     ->options($connections)
                     ->default(config('database.default'))
                     ->reactive()
-                                        ->afterStateUpdated(function ($state) {
+                    ->afterStateUpdated(function ($state) {
                         $this->selectedConnection = $state;
                         $this->selectedTable = null;
                         $this->activeTable = null;
@@ -459,12 +464,13 @@ class DatabaseViewer extends Page implements HasForms, HasTable
             ->statePath('data');
     }
 
-        public function loadTable(?string $tableName): void
+    public function loadTable(?string $tableName): void
     {
-        if (!$tableName) {
+        if (! $tableName) {
             $this->selectedTable = null;
             $this->tableData = [];
             $this->tableColumns = [];
+
             return;
         }
 
@@ -491,9 +497,11 @@ class DatabaseViewer extends Page implements HasForms, HasTable
         }
     }
 
-        public function loadTableData(): void
+    public function loadTableData(): void
     {
-        if (!$this->selectedTable) return;
+        if (! $this->selectedTable) {
+            return;
+        }
 
         try {
             $connection = $this->getConnectionName();
@@ -523,19 +531,21 @@ class DatabaseViewer extends Page implements HasForms, HasTable
                 ->title('SQL query is required')
                 ->danger()
                 ->send();
+
             return;
         }
 
         // Basic security check - only allow SELECT statements
-        if (!preg_match('/^\s*SELECT\s+/i', $sql)) {
+        if (! preg_match('/^\s*SELECT\s+/i', $sql)) {
             Notification::make()
                 ->title('Only SELECT queries are allowed')
                 ->danger()
                 ->send();
+
             return;
         }
 
-                try {
+        try {
             $connection = $this->getConnectionName();
             $results = DB::connection($connection)->select($sql);
 
@@ -552,7 +562,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
                 ->send();
 
         } catch (QueryException $e) {
-            $this->queryResult = "Error: " . $e->getMessage();
+            $this->queryResult = 'Error: '.$e->getMessage();
             Notification::make()
                 ->title('Query failed')
                 ->body($e->getMessage())
@@ -587,14 +597,14 @@ class DatabaseViewer extends Page implements HasForms, HasTable
         return (int) ceil($this->totalRecords / $this->perPage);
     }
 
-        public function getAvailableConnections(): array
+    public function getAvailableConnections(): array
     {
         $connections = [];
         $databaseConfig = config('database.connections', []);
 
         foreach ($databaseConfig as $name => $config) {
             if (isset($config['driver'])) {
-                $label = ucfirst($name) . ' (' . $config['driver'] . ')';
+                $label = ucfirst($name).' ('.$config['driver'].')';
                 $connections[$name] = $label;
             }
         }
@@ -607,7 +617,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
         return $this->data['connection'] ?? config('database.default');
     }
 
-        public function getPresetQueries(): array
+    public function getPresetQueries(): array
     {
         $connection = $this->getConnectionName();
         $driverName = config("database.connections.{$connection}.driver", 'mysql');
@@ -658,11 +668,12 @@ class DatabaseViewer extends Page implements HasForms, HasTable
         return $queries;
     }
 
-        public function loadTableStructure(?string $tableName): void
+    public function loadTableStructure(?string $tableName): void
     {
-        if (!$tableName) {
+        if (! $tableName) {
             $this->selectedStructureTable = null;
             $this->tableStructure = [];
+
             return;
         }
 
@@ -674,20 +685,21 @@ class DatabaseViewer extends Page implements HasForms, HasTable
             // Get table structure based on database type
             if ($driverName === 'sqlite') {
                 $structure = DB::connection($connection)->select("PRAGMA table_info({$tableName})");
-                $this->tableStructure = array_map(function($row) {
+                $this->tableStructure = array_map(function ($row) {
                     $rowArray = (array) $row;
+
                     return [
                         'Field' => $rowArray['name'] ?? '',
                         'Type' => $rowArray['type'] ?? '',
                         'Null' => $rowArray['notnull'] == 1 ? 'NO' : 'YES',
                         'Key' => $rowArray['pk'] == 1 ? 'PRI' : '',
                         'Default' => $rowArray['dflt_value'] ?? 'NULL',
-                        'Extra' => ''
+                        'Extra' => '',
                     ];
                 }, $structure);
             } elseif ($driverName === 'mysql') {
                 $structure = DB::connection($connection)->select("DESCRIBE {$tableName}");
-                $this->tableStructure = array_map(function($row) {
+                $this->tableStructure = array_map(function ($row) {
                     return (array) $row;
                 }, $structure);
             } elseif ($driverName === 'pgsql') {
@@ -703,7 +715,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
                     WHERE table_name = ?
                     ORDER BY ordinal_position
                 ", [$tableName]);
-                $this->tableStructure = array_map(function($row) {
+                $this->tableStructure = array_map(function ($row) {
                     return (array) $row;
                 }, $structure);
             }
@@ -762,20 +774,20 @@ class DatabaseViewer extends Page implements HasForms, HasTable
         }
     }
 
-        public function formatCellValue($value): string
+    public function formatCellValue($value): string
     {
         if ($value === null) {
             return '<span class="fi-db-null-value">NULL</span>';
         } elseif (is_bool($value)) {
             return $value ? 'true' : 'false';
         } elseif (is_string($value) && strlen($value) > 100) {
-            return '<span title="' . htmlspecialchars($value) . '">' . htmlspecialchars(substr($value, 0, 100)) . '...</span>';
+            return '<span title="'.htmlspecialchars($value).'">'.htmlspecialchars(substr($value, 0, 100)).'...</span>';
         } else {
             return htmlspecialchars((string) $value);
         }
     }
 
-        private function formatQueryResults(array $results): string
+    private function formatQueryResults(array $results): string
     {
         if (empty($results)) {
             return 'No results found.';
@@ -806,7 +818,7 @@ class DatabaseViewer extends Page implements HasForms, HasTable
             $columnWidths[$column] = min($width, 50);
         }
 
-        $output = "Query Results (" . count($results) . " rows):\n\n";
+        $output = 'Query Results ('.count($results)." rows):\n\n";
 
         // Create header
         $headerParts = [];
@@ -817,9 +829,9 @@ class DatabaseViewer extends Page implements HasForms, HasTable
             $separatorParts[] = str_repeat('─', $width);
         }
 
-        $output .= '┌─' . implode('─┬─', $separatorParts) . "─┐\n";
-        $output .= '│ ' . implode(' │ ', $headerParts) . " │\n";
-        $output .= '├─' . implode('─┼─', $separatorParts) . "─┤\n";
+        $output .= '┌─'.implode('─┬─', $separatorParts)."─┐\n";
+        $output .= '│ '.implode(' │ ', $headerParts)." │\n";
+        $output .= '├─'.implode('─┼─', $separatorParts)."─┤\n";
 
         // Data rows
         foreach ($displayResults as $row) {
@@ -831,18 +843,18 @@ class DatabaseViewer extends Page implements HasForms, HasTable
 
                 // Truncate if too long
                 if (strlen($displayValue) > $columnWidths[$column]) {
-                    $displayValue = substr($displayValue, 0, $columnWidths[$column] - 3) . '...';
+                    $displayValue = substr($displayValue, 0, $columnWidths[$column] - 3).'...';
                 }
 
                 $valueParts[] = str_pad($displayValue, $columnWidths[$column]);
             }
-            $output .= '│ ' . implode(' │ ', $valueParts) . " │\n";
+            $output .= '│ '.implode(' │ ', $valueParts)." │\n";
         }
 
-        $output .= '└─' . implode('─┴─', $separatorParts) . "─┘\n";
+        $output .= '└─'.implode('─┴─', $separatorParts)."─┘\n";
 
         if (count($results) > 100) {
-            $output .= "\n... and " . (count($results) - 100) . " more rows (showing first 100)\n";
+            $output .= "\n... and ".(count($results) - 100)." more rows (showing first 100)\n";
         }
 
         return $output;

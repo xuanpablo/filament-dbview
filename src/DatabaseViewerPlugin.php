@@ -1,6 +1,6 @@
 <?php
 
-namespace Filaforge\DatabaseViewer;
+namespace Xuanpablo\Dbview;
 
 use Filament\Contracts\Plugin as PluginContract;
 use Filament\Panel;
@@ -14,13 +14,13 @@ class DatabaseViewerPlugin implements PluginContract
 
     public function getId(): string
     {
-        return 'database-viewer';
+        return 'dbview';
     }
 
     public function register(Panel $panel): void
     {
         $panel->pages([
-            \Filaforge\DatabaseViewer\Pages\DatabaseViewer::class,
+            \Xuanpablo\Dbview\Pages\DatabaseViewer::class,
         ]);
     }
 

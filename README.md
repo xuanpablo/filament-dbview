@@ -1,6 +1,6 @@
-# Filaforge Database Viewer
+# Filament DBView
 
-A powerful Filament plugin that provides a comprehensive database viewing and exploration interface directly in your admin panel.
+A plugin that provides database viewing directly in a Filament panel.
 
 ## Features
 
@@ -19,14 +19,14 @@ A powerful Filament plugin that provides a comprehensive database viewing and ex
 ### 1. Install via Composer
 
 ```bash
-composer require filaforge/database-viewer
+composer require xuanpablo/filament-dbview
 ```
 
 ### 2. Publish & Migrate
 
 ```bash
 # Publish provider groups (config, views, migrations)
-php artisan vendor:publish --provider="Filaforge\\DatabaseViewer\\Providers\\DatabaseViewerServiceProvider"
+php artisan vendor:publish --provider="Xuanpablo\\Dbview\\Providers\\DatabaseViewerServiceProvider"
 
 # Run migrations
 php artisan migrate
@@ -43,7 +43,7 @@ public function panel(Panel $panel): Panel
 {
     return $panel
         // ... other configuration
-        ->plugin(\Filaforge\DatabaseViewer\DatabaseViewerPlugin::make());
+        ->plugin(\Xuanpablo\Dbview\DatabaseViewerPlugin::make());
 }
 ```
 
@@ -52,6 +52,7 @@ public function panel(Panel $panel): Panel
 ### Configuration
 
 The plugin will automatically:
+
 - Publish configuration files to `config/database-viewer.php`
 - Publish view files to `resources/views/vendor/database-viewer/`
 - Publish migration files to `database/migrations/`
@@ -127,32 +128,38 @@ DB_VIEWER_CACHE_TTL=300
 ### Debug Steps
 
 1. Check the plugin configuration:
+
 ```bash
 php artisan config:show database-viewer
 ```
 
-2. Verify routes are registered:
+1. Verify routes are registered:
+
 ```bash
 php artisan route:list | grep database-viewer
 ```
 
-3. Test database connectivity:
+1. Test database connectivity:
+
 ```bash
 php artisan tinker
 # Test database connection manually
 ```
 
-4. Check database permissions:
+1. Check database permissions:
+
 ```bash
 # Verify the database user has SELECT privileges
 ```
 
-5. Clear caches:
+1. Clear caches:
+
 ```bash
 php artisan optimize:clear
 ```
 
-6. Check logs for errors:
+1. Check logs for errors:
+
 ```bash
 tail -f storage/logs/laravel.log
 ```
@@ -186,8 +193,9 @@ tail -f storage/logs/laravel.log
 ### 1. Remove Plugin Registration
 
 Remove the plugin from your panel provider:
+
 ```php
-// remove ->plugin(\Filaforge\DatabaseViewer\DatabaseViewerPlugin::make())
+// remove ->plugin(\Xuanpablo\Dbview\DatabaseViewerPlugin::make())
 ```
 
 ### 2. Roll Back Migrations (Optional)
@@ -207,15 +215,15 @@ rm -rf resources/views/vendor/database-viewer
 ### 4. Remove Package and Clear Caches
 
 ```bash
-composer remove filaforge/database-viewer
+composer remove xuanpablo/filament-dbview
 php artisan optimize:clear
 ```
 
 ## Support
 
-- **Documentation**: [GitHub Repository](https://github.com/filaforge/database-viewer)
-- **Issues**: [GitHub Issues](https://github.com/filaforge/database-viewer/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/filaforge/database-viewer/discussions)
+- **Documentation**: [GitHub Repository](https://github.com/xuanpablo/filament-dbview)
+- **Issues**: [GitHub Issues](https://github.com/xuanpablo/filament-dbview/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/xuanpablo/filament-dbview/discussions)
 
 ## Contributing
 
@@ -227,6 +235,4 @@ This plugin is open-sourced software licensed under the [MIT license](LICENSE).
 
 ---
 
-**Made with ❤️ by the Filaforge Team**
-
-
+Maintained by xuanpablo

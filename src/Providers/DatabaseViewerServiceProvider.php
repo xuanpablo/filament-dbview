@@ -1,6 +1,6 @@
 <?php
 
-namespace Filaforge\DatabaseViewer\Providers;
+namespace Xuanpablo\Dbview\Providers;
 
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;

@@ -1,12 +1,15 @@
 # Changelog
 
-All notable changes to `filaforge/database-viewer` will be documented in this file.
+All notable changes to `xuanpablo/filament-dbview` will be documented in this file.
 
-## v0.1.0 - 2025-08-13
-- Initial public release for Filament v4.
-- Database Viewer page with table browser and data preview.
-# Changelog
+## v0.2.0
 
-## 1.0.0 - Initial release
+- Require Filament `^5.0`, Laravel `^13.0`, PHP `^8.3` (older versions dropped).
+- Bump `spatie/laravel-package-tools` to `^1.93` for Laravel 13 support.
+- Fix composer autoload + provider registration to match the `Xuanpablo\Dbview` namespace used in `src/`.
+- Use the v5-idiomatic `Action::schema()` for the `selectTable` header action (was deprecated `->form()`).
 
-- initial release
+## v1.0.0
+
+- Forked from filaforge/filament-database-viewer
+- Bump to Filament 5
